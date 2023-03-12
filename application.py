@@ -8,8 +8,6 @@ from pydantic import BaseModel
 from flask_pydantic import validate
 from os import path
 
-item_similarity_df = pd.read_csv("dataframe/movie_similarity.csv", index_col=0)
-
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
@@ -32,7 +30,8 @@ def make_rec():
     if request.method == "POST":
         data = request.json
         movie = data["movie_title"]
-        # curl -X POST http://10.8.0.12:5000/recms -H 'Content-Type: application/json' -d '{"movie_title":"Heat (1995)"}'
+        item_similarity_df = pd.read_csv("dataframe/movie_similarity.csv", index_col=0)
+        # curl -X POST http://10.8.0.12:8000/recms -H 'Content-Type: application/json' -d '{"movie_title":"Heat (1995)"}'
         try:
             similar_score = item_similarity_df[movie]
             similar_movies = similar_score.sort_values(ascending=False)[1:50]
@@ -42,6 +41,6 @@ def make_rec():
         return ResponseModel(rec_movie = api_recommendations)
 
 if __name__ == "__main__":
-    appPort = int(os.environ.get('PORT', 5000))
+    appPort = int(os.environ.get('PORT', 8000))
     app.run(debug=True, host='10.8.0.12', port=appPort)
 
