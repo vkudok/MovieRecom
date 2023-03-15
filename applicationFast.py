@@ -1,7 +1,12 @@
 from fastapi import FastAPI, Body, status
 from trainModel import recom
 from trainModelRecom import trainModel, collRecom
+import pandas as pd
 import csv
+
+class ResponseModel:
+    def __init__(self, movie_title):
+        self.movie_title = movie_title
 
 app = FastAPI()
 
@@ -16,8 +21,8 @@ async def trainNew():
     return {"message":'trainModel'}
 
 @app.get("/coll_recom")
-async def coll_recom():
-    recom = collRecom(2, 5)
+async def coll_recom(movieId, valueNumber = 5):
+    recom = collRecom(int(movieId), int(valueNumber))
     return {"recommendation": recom}
 
 @app.get("/add_rating")
