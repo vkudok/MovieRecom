@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Body, status
-from trainModel import recom
-from trainModelRecom import trainModel, collRecom
-import pandas as pd
+from trainModelRecom import trainModel, collRecom, setCsvInPSQL
 import csv
 
 class ResponseModel:
@@ -10,10 +8,10 @@ class ResponseModel:
 
 app = FastAPI()
 
-@app.get("/train")
-async def train():
-    recom()
-    return {"message":'train'}
+@app.get("/checkPSQL")
+async def check():
+    setCsvInPSQL()
+    return {"message":'checkPSQL'}
 
 @app.get("/trainNew")
 async def trainNew():

@@ -3,9 +3,11 @@ from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 import pickle
 import json
+from sqlalchemy import create_engine
 
 def trainModel():
-    ratings = pd.read_csv('ratings.csv', low_memory=False)
+    engine = create_engine('postgresql://postgres:1234@localhost:5432/movieinfo')
+    ratings = pd.read_sql_table('ratings', engine)
 
     ratings.drop(['timestamp'], axis = 1, inplace = True)
 
@@ -47,9 +49,31 @@ def trainModel():
 
     knnPickle.close()
 
+def setCsvInPSQL():
+    columns = [
+        "userId",
+        "movieId",
+        "rating",
+        "timestamp"
+    ]
+
+    df = pd.read_csv(
+        "ratings.csv",
+        names=columns
+    )
+
+    engine = create_engine('postgresql://postgres:1234@localhost:5432/movieinfo')
+
+    df.to_sql(
+        'ratings',
+        engine,
+        index=False
+    )
+
 def collRecom(id, numRecom):
-    movies = pd.read_csv('movie.csv', low_memory=False)
-    links = pd.read_csv('link.csv', low_memory=False)
+    engine = create_engine('postgresql://postgres:1234@localhost:5432/movieinfo')
+    movies = pd.read_sql_table('movies', engine)
+    links = pd.read_sql_table('links', engine)
     knn = pickle.load(open('dataframe/knnpickle_file', 'rb'))
     user_item_matrix = pickle.load(open('dataframe/user_item_matrix', 'rb'))
     csr_data = pickle.load(open('dataframe/csr_data', 'rb'))
@@ -64,10 +88,6 @@ def collRecom(id, numRecom):
     distances_list = distances.squeeze().tolist()
 
     indices_distances = list(zip(indices_list, distances_list))
-
-    print(type(indices_distances[0]))
-
-    print(indices_distances[:3])
 
     indices_distances_sorted = sorted(indices_distances, key = lambda x: x[1], reverse = False)
 
