@@ -5,8 +5,10 @@ import pickle
 import json
 from sqlalchemy import create_engine
 
+POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
+
 def trainModel():
-    engine = create_engine('postgresql://postgres:1234@localhost:5432/movieinfo')
+    engine = create_engine(POSTGRESQL_HOSTS)
     ratings = pd.read_sql_table('ratings', engine)
 
     ratings.drop(['timestamp'], axis = 1, inplace = True)
@@ -62,7 +64,7 @@ def setCsvInPSQL():
         names=columns
     )
 
-    engine = create_engine('postgresql://postgres:1234@localhost:5432/movieinfo')
+    engine = create_engine(POSTGRESQL_HOSTS)
 
     df.to_sql(
         'ratings',
@@ -71,7 +73,7 @@ def setCsvInPSQL():
     )
 
 def collRecom(id, numRecom):
-    engine = create_engine('postgresql://postgres:1234@localhost:5432/movieinfo')
+    engine = create_engine(POSTGRESQL_HOSTS)
     movies = pd.read_sql_table('movies', engine)
     links = pd.read_sql_table('links', engine)
     knn = pickle.load(open('dataframe/knnpickle_file', 'rb'))
