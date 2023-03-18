@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Body, status
-from trainModelRecom import trainModel, collRecom, setCsvInPSQL
+from trainModelRecom import addNewValuesInMovieAndLink, findMovieIdByTableId, trainModel, collRecom, setCsvInPSQL
 import csv
 
 class ResponseModel:
@@ -8,15 +8,43 @@ class ResponseModel:
 
 app = FastAPI()
 
+@app.get("/findMovieIdByTableId")
+async def find():
+    movies = {
+        "movieInfo":
+            [
+                {
+                    "name": "Toy Story (1995)",
+                    "movieId": 862
+                },
+                {
+                    "name": "Black Panther: Wakanda Forever",
+                    "movieId": 505642
+                },
+                {
+                    "name": "Knock at the Cabin",
+                    "movieId": 631842
+                }
+            ]
+    }
+    listId = []
+    for item in movies['movieInfo']:
+        listId.append(item['movieId'])
+    object = findMovieIdByTableId(listId)
+    if(len(object['missingIds'])):
+        addNewValuesInMovieAndLink(object['missingIds'], movies)
+    else:
+        find = 'not find'
+    return {"message": object}
+
 @app.get("/checkPSQL")
 async def check():
-    setCsvInPSQL()
     return {"message":'checkPSQL'}
 
-@app.get("/trainNew")
+@app.get("/addNewValuesInMovieAndLink")
 async def trainNew():
-    trainModel()
-    return {"message":'trainModel'}
+    obeject = addNewValuesInMovieAndLink()
+    return obeject
 
 @app.get("/coll_recom")
 async def coll_recom(movieId, valueNumber = 5):

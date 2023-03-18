@@ -4,8 +4,46 @@ from sklearn.neighbors import NearestNeighbors
 import pickle
 import json
 from sqlalchemy import create_engine
+import psycopg2
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
+conn = psycopg2.connect(dbname="movieinfo",
+                        port="5432",
+                        host="localhost",
+                        user="postgres",
+                        password="1234")
+
+def findMovieIdByTableId(listId):
+    cur = conn.cursor()
+    sql = """SELECT array_agg(tmdbid) FROM links WHERE tmdbid = ANY(%s);"""
+    cur.execute(sql, (listId, ))
+    existingIds = cur.fetchone()[0]
+    if existingIds is None:
+        existingIds = []
+    missingIds = set(listId) - set(existingIds)
+    object = {
+        "existingIds": existingIds,
+        "missingIds": missingIds
+    }
+    return object
+
+def addNewValuesInMovieAndLink(missingIds, movies):
+    cur = conn.cursor()
+    sql = """SELECT "movieId" FROM movies ORDER BY "movieId" DESC LIMIT 1;"""
+    cur.execute(sql)
+    lastId = cur.fetchone()[0]
+    cur.close()
+
+    cur = conn.cursor()
+    for el in missingIds:
+        for item in movies['movieInfo']:
+            if (item['movieId'] == el):
+                lastId += 1
+                sql = """INSERT INTO movies ("movieId", "title") VALUES (%s, %s)"""
+                cur.execute(sql, (lastId, item['name']))
+                conn.commit()
+    cur.close()
+    return {'check': 'check'}
 
 def trainModel():
     engine = create_engine(POSTGRESQL_HOSTS)
@@ -102,7 +140,7 @@ def collRecom(id, numRecom):
         id = movies[movies['movieId'] == matrix_movie_id].index
         title = movies.iloc[id]['title'].values[0]
         movie_id = movies.iloc[id]['movieId'].values[0]
-        tmdbId = links.iloc[id]['tmdbId'].values[0]
+        tmdbId = links.iloc[id]['tmdbid'].values[0]
         dist = ind_dist[1]
         recom_list.append({'title' : title, 'movie_id' : movie_id, 'tmdbId': tmdbId, 'distance' : dist})
 
