@@ -1,21 +1,32 @@
 from fastapi import FastAPI, Body, status
-from trainModelRecom import getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie, trainModel, collRecom
+from trainModelRecom import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie, \
+    trainModel, collaborativeRecom
 import csv
 from typing import List
 from pydantic import BaseModel
 
-class Movie(BaseModel):
+
+class MovieType(BaseModel):
     name: str
     movieId: int
 
-class MovieInfo(BaseModel):
-    movieInfo: List[Movie]
+
+class MovieInfoType(BaseModel):
+    movieInfo: List[MovieType]
+
+
+class RatingType(BaseModel):
+    userId: int
+    movieId: int
+    rating: float
+    timestamp: str
+
 
 app = FastAPI()
 
 
 @app.post("/findMovieIdByTableId")
-async def find(movies: MovieInfo = Body()):
+async def find(movies: MovieInfoType = Body()):
     listId = []
     for item in movies.movieInfo:
         listId.append(item.movieId)
@@ -25,6 +36,12 @@ async def find(movies: MovieInfo = Body()):
     movieListIds = getMovieIdByTmdbId(listId)
     trainModel()
     return {"movieListIds": movieListIds}
+
+
+@app.post("/setMovieRating")
+async def setRating(userRating: RatingType = Body()):
+    setNewUserRating(userRating)
+    return {"message": 'Add Rating'}
 
 
 @app.get("/checkPSQL")
@@ -40,14 +57,5 @@ async def trainNew():
 
 @app.get("/coll_recom")
 async def coll_recom(movieId, valueNumber=5):
-    recom = collRecom(int(movieId), int(valueNumber))
+    recom = collaborativeRecom(int(movieId), int(valueNumber))
     return {"recommendation": recom}
-
-
-@app.get("/add_rating")
-async def add_new():
-    fields = ["612", "110", "4.0", "964982703"]
-    with open(r'ratings.csv', 'a', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(fields)
-    return {"message": 'Add Rating'}

@@ -5,6 +5,7 @@ import pickle
 import json
 from sqlalchemy import create_engine
 import psycopg2
+from psycopg2 import connect, OperationalError, errorcodes, errors
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
 conn = psycopg2.connect(dbname="movieinfo",
@@ -26,6 +27,7 @@ def findExistingMovie(listId):
         "existingIds": existingIds,
         "missingIds": missingIds
     }
+    cur.close()
     return object
 
 
@@ -59,6 +61,17 @@ def getMovieIdByTmdbId(idList):
         movieId.append(cur.fetchone()[0])
     cur.close()
     return movieId
+
+
+def setNewUserRating(userRating):
+    cur = conn.cursor()
+    sql = """INSERT INTO ratings ("userId", "movieId", "rating", "timestamp") VALUES (%s, %s, %s, %s)"""
+    try:
+        cur.execute(sql, (userRating.userId, userRating.movieId, userRating.rating, userRating.timestamp))
+        conn.commit()
+        cur.close()
+    except errors.InFailedSqlTransaction as err:
+        print_psycopg2_exception(err)
 
 
 def trainModel():
@@ -101,8 +114,7 @@ def trainModel():
 
     knnPickle.close()
 
-
-def collRecom(id, numRecom):
+def collaborativeRecom(id, numRecom):
     engine = create_engine(POSTGRESQL_HOSTS)
     movies = pd.read_sql_table('movies', engine)
     links = pd.read_sql_table('links', engine)
