@@ -73,10 +73,6 @@ def trainModel():
     users_votes = ratings.groupby('userId')['rating'].agg('count')
     movies_votes = ratings.groupby('movieId')['rating'].agg('count')
 
-    user_item_matrixPickle = open('dataframe/user_item_matrix', 'wb')
-    pickle.dump(user_item_matrix, user_item_matrixPickle)
-    user_item_matrixPickle.close()
-
     user_mask = users_votes[users_votes > 50].index
     movie_mask = movies_votes[movies_votes > 10].index
 
