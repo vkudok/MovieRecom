@@ -13,10 +13,11 @@ conn = psycopg2.connect(dbname="movieinfo",
                         user="postgres",
                         password="1234")
 
-def findMovieIdByTableId(listId):
+
+def findExistingMovie(listId):
     cur = conn.cursor()
     sql = """SELECT array_agg(tmdbid) FROM links WHERE tmdbid = ANY(%s);"""
-    cur.execute(sql, (listId, ))
+    cur.execute(sql, (listId,))
     existingIds = cur.fetchone()[0]
     if existingIds is None:
         existingIds = []
@@ -27,6 +28,7 @@ def findMovieIdByTableId(listId):
     }
     return object
 
+
 def addNewValuesInMovieAndLink(missingIds, movies):
     cur = conn.cursor()
     sql = """SELECT "movieId" FROM movies ORDER BY "movieId" DESC LIMIT 1;"""
@@ -36,23 +38,37 @@ def addNewValuesInMovieAndLink(missingIds, movies):
 
     cur = conn.cursor()
     for el in missingIds:
-        for item in movies['movieInfo']:
-            if (item['movieId'] == el):
+        for item in movies.movieInfo:
+            if (item.movieId == el):
                 lastId += 1
                 sql = """INSERT INTO movies ("movieId", "title") VALUES (%s, %s)"""
-                cur.execute(sql, (lastId, item['name']))
+                cur.execute(sql, (lastId, item.name))
+                conn.commit()
+                sql = """INSERT INTO links ("movieid", "tmdbid") VALUES (%s, %s)"""
+                cur.execute(sql, (lastId, item.movieId))
                 conn.commit()
     cur.close()
-    return {'check': 'check'}
+
+
+def getMovieIdByTmdbId(idList):
+    cur = conn.cursor()
+    movieId = []
+    for item in idList:
+        sql = """SELECT "movieid" FROM public.links  WHERE "tmdbid" = %s;"""
+        cur.execute(sql, (item,))
+        movieId.append(cur.fetchone()[0])
+    cur.close()
+    return movieId
+
 
 def trainModel():
     engine = create_engine(POSTGRESQL_HOSTS)
     ratings = pd.read_sql_table('ratings', engine)
 
-    ratings.drop(['timestamp'], axis = 1, inplace = True)
+    ratings.drop(['timestamp'], axis=1, inplace=True)
 
-    user_item_matrix = ratings.pivot(index = 'movieId', columns = 'userId', values= 'rating')
-    user_item_matrix.fillna(0, inplace = True)
+    user_item_matrix = ratings.pivot(index='movieId', columns='userId', values='rating')
+    user_item_matrix.fillna(0, inplace=True)
 
     users_votes = ratings.groupby('userId')['rating'].agg('count')
     movies_votes = ratings.groupby('movieId')['rating'].agg('count')
@@ -64,9 +80,9 @@ def trainModel():
     user_mask = users_votes[users_votes > 50].index
     movie_mask = movies_votes[movies_votes > 10].index
 
-    user_item_matrix = user_item_matrix.loc[movie_mask,:]
+    user_item_matrix = user_item_matrix.loc[movie_mask, :]
 
-    user_item_matrix = user_item_matrix.loc[:,user_mask]
+    user_item_matrix = user_item_matrix.loc[:, user_mask]
 
     csr_data = csr_matrix(user_item_matrix.values)
 
@@ -74,13 +90,13 @@ def trainModel():
     pickle.dump(csr_data, csr_dataPickle)
     csr_dataPickle.close()
 
-    user_item_matrix = user_item_matrix.rename_axis(None, axis = 1).reset_index()
+    user_item_matrix = user_item_matrix.rename_axis(None, axis=1).reset_index()
 
     user_item_matrixPickle = open('dataframe/user_item_matrix', 'wb')
     pickle.dump(user_item_matrix, user_item_matrixPickle)
     user_item_matrixPickle.close()
 
-    knn = NearestNeighbors(metric = 'cosine', algorithm = 'brute', n_neighbors = 20, n_jobs = -1)
+    knn = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=20, n_jobs=-1)
     knn.fit(csr_data)
 
     knnPickle = open('dataframe/knnpickle_file', 'wb')
@@ -89,26 +105,6 @@ def trainModel():
 
     knnPickle.close()
 
-def setCsvInPSQL():
-    columns = [
-        "userId",
-        "movieId",
-        "rating",
-        "timestamp"
-    ]
-
-    df = pd.read_csv(
-        "ratings.csv",
-        names=columns
-    )
-
-    engine = create_engine(POSTGRESQL_HOSTS)
-
-    df.to_sql(
-        'ratings',
-        engine,
-        index=False
-    )
 
 def collRecom(id, numRecom):
     engine = create_engine(POSTGRESQL_HOSTS)
@@ -122,14 +118,14 @@ def collRecom(id, numRecom):
     movie_id = id
 
     movie_id = user_item_matrix[user_item_matrix['movieId'] == movie_id].index[0]
-    distances, indices = knn.kneighbors(csr_data[movie_id], n_neighbors = recommendations + 1)
+    distances, indices = knn.kneighbors(csr_data[movie_id], n_neighbors=recommendations + 1)
 
     indices_list = indices.squeeze().tolist()
     distances_list = distances.squeeze().tolist()
 
     indices_distances = list(zip(indices_list, distances_list))
 
-    indices_distances_sorted = sorted(indices_distances, key = lambda x: x[1], reverse = False)
+    indices_distances_sorted = sorted(indices_distances, key=lambda x: x[1], reverse=False)
 
     indices_distances_sorted = indices_distances_sorted[1:]
 
@@ -142,8 +138,8 @@ def collRecom(id, numRecom):
         movie_id = movies.iloc[id]['movieId'].values[0]
         tmdbId = links.iloc[id]['tmdbid'].values[0]
         dist = ind_dist[1]
-        recom_list.append({'title' : title, 'movie_id' : movie_id, 'tmdbId': tmdbId, 'distance' : dist})
+        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, 'distance': dist})
 
-    recom_df = pd.DataFrame(recom_list, index = range(1, recommendations + 1))
+    recom_df = pd.DataFrame(recom_list, index=range(1, recommendations + 1))
 
-    return json.loads(recom_df.to_json(orient = "records"))
+    return json.loads(recom_df.to_json(orient="records"))
