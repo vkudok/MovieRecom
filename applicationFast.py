@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Body, status
-from trainModelRecom import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie, \
-    trainModel, collaborativeRecom
-import csv
+from collaborativeFiltering import trainModel, collaborativeRecom
+from addingMovies import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
+from contentBasedFiltering import tfidfVector
 from typing import List
 from pydantic import BaseModel
 
@@ -53,6 +53,11 @@ async def check():
 async def trainNew():
     trainModel()
     return {"message": 'trainModel'}
+
+@app.get("/content")
+async def content():
+    list = tfidfVector()
+    return {"message": list}
 
 
 @app.get("/coll_recom")
