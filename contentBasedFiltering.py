@@ -33,7 +33,8 @@ def extract_year(title):
 
 def prepareData():
     # change the column name from title to title_year
-    movies = pd.read_csv('movie.csv')
+    movies = pd.read_sql_table('movies', engine)
+
     movies.rename(columns={'title': 'title_year'}, inplace=True)
     # remove leading and ending whitespaces in title_year
     movies['title_year'] = movies['title_year'].apply(lambda x: x.strip())
@@ -70,9 +71,11 @@ def contentBasedRecom(id, numRecom):
 def get_title_year_from_index(index, movies):
     return movies[movies.index == index]['title_year'].values[0]
 
+
 # a function to convert index to title_year
 def get_movieId_from_index(index, movies):
     return movies[movies.index == index]['movieId'].values[0]
+
 
 def recommender(movieId, how_many, movies, sim_matrix):
     links = pd.read_sql_table('links', engine)
@@ -88,7 +91,7 @@ def recommender(movieId, how_many, movies, sim_matrix):
         movie_id = get_movieId_from_index(id, movies)
         linkId = links[links['movieid'] == movie_id].index
         tmdbId = links.iloc[linkId]['tmdbid'].values[0]
-        recommenderMovies.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId,})
+        recommenderMovies.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, })
 
     recom_df = pd.DataFrame(recommenderMovies)
 

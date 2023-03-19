@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
 
-def trainModel():
+def trainCollModel():
     engine = create_engine(POSTGRESQL_HOSTS)
     ratings = pd.read_sql_table('ratings', engine)
 

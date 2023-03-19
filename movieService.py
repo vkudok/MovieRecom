@@ -36,8 +36,8 @@ def addNewValuesInMovieAndLink(missingIds, movies):
         for item in movies.movieInfo:
             if (item.movieId == el):
                 lastId += 1
-                sql = """INSERT INTO movies ("movieId", "title") VALUES (%s, %s)"""
-                cur.execute(sql, (lastId, item.name))
+                sql = """INSERT INTO movies ("movieId", "title", "genres") VALUES (%s, %s, %s)"""
+                cur.execute(sql, (lastId, item.name, item.genre))
                 conn.commit()
                 sql = """INSERT INTO links ("movieid", "tmdbid") VALUES (%s, %s)"""
                 cur.execute(sql, (lastId, item.movieId))
