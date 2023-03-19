@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Body, status
 from collaborativeFiltering import trainModel, collaborativeRecom
-from addingMovies import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
-from contentBasedFiltering import tfidfVector
+from movieService import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
+from contentBasedFiltering import contentBasedRecom
 from typing import List
 from pydantic import BaseModel
+from fastapi.encoders import jsonable_encoder
 
 
 class MovieType(BaseModel):
@@ -44,20 +45,16 @@ async def setRating(userRating: RatingType = Body()):
     return {"message": 'Add Rating'}
 
 
-@app.get("/checkPSQL")
-async def check():
-    return {"message": 'checkPSQL'}
-
-
 @app.get("/trainModel")
 async def trainNew():
     trainModel()
     return {"message": 'trainModel'}
 
-@app.get("/content")
-async def content():
-    list = tfidfVector()
-    return {"message": list}
+
+@app.get("/content_recom")
+async def content(movieId, valueNumber=5):
+    recom = contentBasedRecom(int(movieId), int(valueNumber))
+    return {"recommendation": recom}
 
 
 @app.get("/coll_recom")

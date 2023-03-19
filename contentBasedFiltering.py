@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-from fuzzywuzzy import fuzz
 import pandas as pd
+import json
 from sqlalchemy import create_engine
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
@@ -53,18 +53,16 @@ def prepareData():
     return movies
 
 
-def tfidfVector():
+def contentBasedRecom(id, numRecom):
     movies = prepareData()
     # create an object for TfidfVectorizer
     tfidf_vector = TfidfVectorizer(stop_words='english')
     # apply the object to the genres column
     tfidf_matrix = tfidf_vector.fit_transform(movies['genres'])
-    tfidf_matrix.shape
 
     # create the cosine similarity matrix
     sim_matrix = linear_kernel(tfidf_matrix, tfidf_matrix)
-    recomenderMovies = contents_based_recommender('Monsters, Inc.', 5, movies, sim_matrix)
-
+    recomenderMovies = recommender(id, numRecom, movies, sim_matrix)
     return recomenderMovies
 
 
@@ -72,26 +70,26 @@ def tfidfVector():
 def get_title_year_from_index(index, movies):
     return movies[movies.index == index]['title_year'].values[0]
 
+# a function to convert index to title_year
+def get_movieId_from_index(index, movies):
+    return movies[movies.index == index]['movieId'].values[0]
 
-# # a function to convert index to title
-# def get_title_from_index(index, movies):
-#     return movies[movies.index == index]['title'].values[0]
+def recommender(movieId, how_many, movies, sim_matrix):
+    links = pd.read_sql_table('links', engine)
 
-
-# a function to convert title to index
-def get_index_from_title(title, movies):
-    return movies[movies.title == title].index.values[0]
-
-
-def contents_based_recommender(movie_user_likes, how_many, movies, sim_matrix):
     recommenderMovies = []
-    movie_index = get_index_from_title(movie_user_likes, movies)
-    movie_list = list(enumerate(sim_matrix[int(movie_index)]))
+    movie_list = list(enumerate(sim_matrix[int(movieId)]))
     # remove the typed movie itself
     similar_movies = list(
-        filter(lambda x: x[0] != int(movie_index), sorted(movie_list, key=lambda x: x[1], reverse=True)))
+        filter(lambda x: x[0] != int(movieId), sorted(movie_list, key=lambda x: x[1], reverse=True)))
 
-    for i, s in similar_movies[:how_many]:
-        recommenderMovies.append(get_title_year_from_index(i, movies))
+    for id, s in similar_movies[:how_many]:
+        title = get_title_year_from_index(id, movies)
+        movie_id = get_movieId_from_index(id, movies)
+        linkId = links[links['movieid'] == movie_id].index
+        tmdbId = links.iloc[linkId]['tmdbid'].values[0]
+        recommenderMovies.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId,})
 
-    return recommenderMovies
+    recom_df = pd.DataFrame(recommenderMovies)
+
+    return json.loads(recom_df.to_json(orient="records"))

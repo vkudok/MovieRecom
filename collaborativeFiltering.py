@@ -4,15 +4,8 @@ from sklearn.neighbors import NearestNeighbors
 import pickle
 import json
 from sqlalchemy import create_engine
-import psycopg2
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
-conn = psycopg2.connect(dbname="movieinfo",
-                        port="5432",
-                        host="localhost",
-                        user="postgres",
-                        password="1234")
-
 
 def trainModel():
     engine = create_engine(POSTGRESQL_HOSTS)
@@ -54,6 +47,7 @@ def trainModel():
 
     knnPickle.close()
 
+
 def collaborativeRecom(id, numRecom):
     engine = create_engine(POSTGRESQL_HOSTS)
     movies = pd.read_sql_table('movies', engine)
@@ -86,8 +80,7 @@ def collaborativeRecom(id, numRecom):
         movie_id = movies.iloc[id]['movieId'].values[0]
         linkId = links[links['movieid'] == matrix_movie_id].index
         tmdbId = links.iloc[linkId]['tmdbid'].values[0]
-        dist = ind_dist[1]
-        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, 'distance': dist})
+        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId})
 
     recom_df = pd.DataFrame(recom_list, index=range(1, recommendations + 1))
 

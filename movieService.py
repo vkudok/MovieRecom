@@ -1,7 +1,6 @@
 import psycopg2
 from psycopg2 import connect, OperationalError, errorcodes, errors
 
-POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
 conn = psycopg2.connect(dbname="movieinfo",
                         port="5432",
                         host="localhost",
