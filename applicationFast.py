@@ -2,6 +2,7 @@ from fastapi import FastAPI, Body, status
 from collaborativeFiltering import trainCollModel, collaborativeRecom
 from movieService import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
 from contentBasedFiltering import contentBasedRecom
+from index import recommendationDefine
 from typing import List
 from pydantic import BaseModel
 
@@ -9,7 +10,7 @@ from pydantic import BaseModel
 class MovieType(BaseModel):
     name: str
     genre: str
-    movieId: int
+    tmdbId: int
 
 
 class MovieInfoType(BaseModel):
@@ -26,11 +27,11 @@ class RatingType(BaseModel):
 app = FastAPI()
 
 
-@app.post("/findMovieIdByTableId")
+@app.post("/findMovieIdByTmdbId")
 async def find(movies: MovieInfoType = Body()):
     listId = []
     for item in movies.movieInfo:
-        listId.append(item.movieId)
+        listId.append(item.tmdbId)
     object = findExistingMovie(listId)
     if (len(object['missingIds'])):
         addNewValuesInMovieAndLink(object['missingIds'], movies)
@@ -43,6 +44,12 @@ async def find(movies: MovieInfoType = Body()):
 async def setRating(userRating: RatingType = Body()):
     setNewUserRating(userRating)
     return {"message": 'Add Rating'}
+
+
+@app.post("/getRecom")
+async def getRecom(tmdbId, valueNumber=5):
+    recom = recommendationDefine(int(tmdbId), int(valueNumber))
+    return {"recommendation": recom}
 
 
 @app.get("/content_recom")

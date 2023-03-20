@@ -4,8 +4,10 @@ from sklearn.neighbors import NearestNeighbors
 import pickle
 import json
 from sqlalchemy import create_engine
+from enums import numMoviesInRating, numUsersInRating
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
+
 
 def trainCollModel():
     engine = create_engine(POSTGRESQL_HOSTS)
@@ -19,8 +21,8 @@ def trainCollModel():
     users_votes = ratings.groupby('userId')['rating'].agg('count')
     movies_votes = ratings.groupby('movieId')['rating'].agg('count')
 
-    user_mask = users_votes[users_votes > 50].index
-    movie_mask = movies_votes[movies_votes > 10].index
+    user_mask = users_votes[users_votes > numUsersInRating].index
+    movie_mask = movies_votes[movies_votes > numMoviesInRating].index
 
     user_item_matrix = user_item_matrix.loc[movie_mask, :]
 
@@ -80,7 +82,7 @@ def collaborativeRecom(id, numRecom):
         movie_id = movies.iloc[id]['movieId'].values[0]
         linkId = links[links['movieid'] == matrix_movie_id].index
         tmdbId = links.iloc[linkId]['tmdbid'].values[0]
-        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId})
+        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, 'coll': 'coll'})
 
     recom_df = pd.DataFrame(recom_list, index=range(1, recommendations + 1))
 

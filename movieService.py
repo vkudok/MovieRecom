@@ -24,6 +24,17 @@ def findExistingMovie(listId):
     return object
 
 
+def countMovieEntriesInRating(movieIdList):
+    cur = conn.cursor()
+    countMovies = []
+    for item in movieIdList:
+        sql = """SELECT COUNT(*) FROM ratings WHERE "movieId" = %s"""
+        cur.execute(sql, (item,))
+        countMovies.append(cur.fetchone()[0])
+    cur.close()
+    return countMovies
+
+
 def addNewValuesInMovieAndLink(missingIds, movies):
     cur = conn.cursor()
     sql = """SELECT "movieId" FROM movies ORDER BY "movieId" DESC LIMIT 1;"""
@@ -34,13 +45,13 @@ def addNewValuesInMovieAndLink(missingIds, movies):
     cur = conn.cursor()
     for el in missingIds:
         for item in movies.movieInfo:
-            if (item.movieId == el):
+            if (item.tmdbId == el):
                 lastId += 1
                 sql = """INSERT INTO movies ("movieId", "title", "genres") VALUES (%s, %s, %s)"""
                 cur.execute(sql, (lastId, item.name, item.genre))
                 conn.commit()
                 sql = """INSERT INTO links ("movieid", "tmdbid") VALUES (%s, %s)"""
-                cur.execute(sql, (lastId, item.movieId))
+                cur.execute(sql, (lastId, item.tmdbId))
                 conn.commit()
     cur.close()
 
