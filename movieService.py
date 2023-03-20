@@ -70,9 +70,6 @@ def getMovieIdByTmdbId(idList):
 def setNewUserRating(userRating):
     cur = conn.cursor()
     sql = """INSERT INTO ratings ("userId", "movieId", "rating", "timestamp") VALUES (%s, %s, %s, %s)"""
-    try:
-        cur.execute(sql, (userRating.userId, userRating.movieId, userRating.rating, userRating.timestamp))
-        conn.commit()
-        cur.close()
-    except errors.InFailedSqlTransaction as err:
-        print_psycopg2_exception(err)
+    cur.execute(sql, (userRating.userId, userRating.movieId, userRating.rating, userRating.timestamp))
+    conn.commit()
+    cur.close()

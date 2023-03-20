@@ -77,18 +77,20 @@ def get_movieId_from_index(index, movies):
     return movies[movies.index == index]['movieId'].values[0]
 
 
-def recommender(movieId, how_many, movies, sim_matrix):
+def recommender(entryMovieId, how_many, movies, sim_matrix):
     links = pd.read_sql_table('links', engine)
 
+    strIndex = movies[movies.movieId == entryMovieId].index.values[0]
+
     recommenderMovies = []
-    movie_list = list(enumerate(sim_matrix[int(movieId)]))
+    movie_list = list(enumerate(sim_matrix[int(strIndex)]))
     # remove the typed movie itself
     similar_movies = list(
-        filter(lambda x: x[0] != int(movieId), sorted(movie_list, key=lambda x: x[1], reverse=True)))
+        filter(lambda x: x[0] != int(entryMovieId), sorted(movie_list, key=lambda x: x[1], reverse=True)))
 
     for id, s in similar_movies[:how_many]:
-        title = get_title_year_from_index(id, movies)
         movie_id = get_movieId_from_index(id, movies)
+        title = get_title_year_from_index(id, movies)
         linkId = links[links['movieid'] == movie_id].index
         tmdbId = links.iloc[linkId]['tmdbid'].values[0]
         recommenderMovies.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, 'cotent': 'cotent'})
