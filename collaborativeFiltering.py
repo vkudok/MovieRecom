@@ -82,7 +82,7 @@ def collaborativeRecom(id, numRecom):
         movie_id = movies.iloc[id]['movieId'].values[0]
         linkId = links[links['movieid'] == matrix_movie_id].index
         tmdbId = links.iloc[linkId]['tmdbid'].values[0]
-        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, 'coll': 'coll'})
+        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId})
 
     recom_df = pd.DataFrame(recom_list, index=range(1, recommendations + 1))
 

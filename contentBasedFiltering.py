@@ -93,7 +93,7 @@ def recommender(entryMovieId, how_many, movies, sim_matrix):
         title = get_title_year_from_index(id, movies)
         linkId = links[links['movieid'] == movie_id].index
         tmdbId = links.iloc[linkId]['tmdbid'].values[0]
-        recommenderMovies.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId, 'cotent': 'cotent'})
+        recommenderMovies.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId})
 
     recom_df = pd.DataFrame(recommenderMovies)
 
