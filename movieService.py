@@ -28,7 +28,7 @@ def countMovieEntriesInRating(movieIdList):
     cur = conn.cursor()
     countMovies = []
     for item in movieIdList:
-        sql = """SELECT COUNT(*) FROM ratings WHERE "movieId" = %s"""
+        sql = """SELECT COUNT(*) FROM ratings2 WHERE "movieId" = %s"""
         cur.execute(sql, (item,))
         countMovies.append(cur.fetchone()[0])
     cur.close()
@@ -69,7 +69,7 @@ def getMovieIdByTmdbId(idList):
 
 def setNewUserRating(userRating):
     cur = conn.cursor()
-    sql = """INSERT INTO ratings ("userId", "movieId", "rating", "timestamp") VALUES (%s, %s, %s, %s)"""
+    sql = """INSERT INTO ratings2 ("userId", "movieId", "rating", "timestamp") VALUES (%s, %s, %s, %s)"""
     cur.execute(sql, (userRating.userId, userRating.movieId, userRating.rating, userRating.timestamp))
     conn.commit()
     cur.close()

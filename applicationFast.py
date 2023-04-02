@@ -6,6 +6,7 @@ from index import recommendationDefine
 from typing import List
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from movieService import countMovieEntriesInRating
 
 class MovieType(BaseModel):
     name: str
@@ -18,7 +19,7 @@ class MovieInfoType(BaseModel):
 
 
 class RatingType(BaseModel):
-    userId: int
+    userId: str
     movieId: int
     rating: float
     timestamp: str
@@ -46,10 +47,23 @@ async def find(movies: MovieInfoType = Body()):
     object = findExistingMovie(listId)
     if (len(object['missingIds'])):
         addNewValuesInMovieAndLink(object['missingIds'], movies)
+        trainCollModel()
     movieListIds = getMovieIdByTmdbId(listId)
-    trainCollModel()
-    return {"movieListIds": movieListIds}
+    return movieListIds
 
+
+@app.post("/trainCollModel")
+async def find():
+    trainCollModel()
+    return {"trainCollModel": "trainCollModel"}
+
+@app.post("/countMovieEntriesInRating")
+async def countMovie(tmdbId):
+    tmdbIdList = []
+    tmdbIdList.append(tmdbId)
+    movieIdList = getMovieIdByTmdbId(tmdbIdList)
+    count = countMovieEntriesInRating(movieIdList)[0]
+    return {"count": count}
 
 @app.post("/setMovieRating")
 async def setRating(userRating: RatingType = Body()):

@@ -11,11 +11,10 @@ POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
 
 def trainCollModel():
     engine = create_engine(POSTGRESQL_HOSTS)
-    ratings = pd.read_sql_table('ratings', engine)
+    ratings = pd.read_sql_table('ratings2', engine)
 
     ratings.drop(['timestamp'], axis=1, inplace=True)
-
-    user_item_matrix = ratings.pivot(index='movieId', columns='userId', values='rating')
+    user_item_matrix = ratings.pivot_table(index='movieId', columns='userId', values='rating', aggfunc='mean')
     user_item_matrix.fillna(0, inplace=True)
 
     users_votes = ratings.groupby('userId')['rating'].agg('count')
