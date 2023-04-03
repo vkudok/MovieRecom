@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Body, status
 from collaborativeFiltering import trainCollModel, collaborativeRecom
-from movieService import setNewUserRating, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
+from movieService import setNewUserRating, findRatingByVoteAndMovie, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
 from contentBasedFiltering import contentBasedRecom
 from index import recommendationDefine
 from typing import List
@@ -68,8 +68,12 @@ async def countMovie(tmdbId):
 @app.post("/setMovieRating")
 async def setRating(userRating: RatingType = Body()):
     setNewUserRating(userRating)
-    return {"message": 'Add Rating'}
+    return {"message": 'Add Rating'}\
 
+@app.post("/findRating")
+async def findRating(userRating: RatingType = Body()):
+    result = findRatingByVoteAndMovie(userRating, True)
+    return result[2]
 
 @app.post("/getRecom")
 async def getRecom(tmdbId, valueNumber=5):

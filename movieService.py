@@ -66,8 +66,26 @@ def getMovieIdByTmdbId(idList):
     cur.close()
     return movieId
 
+def findRatingByVoteAndMovie(userRating, returnCount=False):
+    cur = conn.cursor()
+    sql = """SELECT COUNT(*) FROM public.ratings2  where "movieId" = %s and "userId" = %s"""
+    if(returnCount):
+        sql = """SELECT * FROM public.ratings2  where "movieId" = %s and "userId" = %s"""
+    cur.execute(sql, (userRating.movieId, userRating.userId))
+    ratingList = cur.fetchone()
+    cur.close()
+    return ratingList
+
+def deleteRatingValue(userRating):
+    cur = conn.cursor()
+    sql = """DELETE FROM public.ratings2  where "movieId" = %s and "userId" = %s"""
+    cur.execute(sql, (userRating.movieId, userRating.userId))
+    conn.commit()
+    cur.close()
 
 def setNewUserRating(userRating):
+    if(findRatingByVoteAndMovie(userRating)[0] > 0):
+        deleteRatingValue(userRating)
     cur = conn.cursor()
     sql = """INSERT INTO ratings2 ("userId", "movieId", "rating", "timestamp") VALUES (%s, %s, %s, %s)"""
     cur.execute(sql, (userRating.userId, userRating.movieId, userRating.rating, userRating.timestamp))
