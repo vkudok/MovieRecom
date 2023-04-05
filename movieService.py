@@ -1,5 +1,4 @@
 import psycopg2
-from psycopg2 import connect, OperationalError, errorcodes, errors
 
 conn = psycopg2.connect(dbname="movieinfo",
                         port="5432",
@@ -41,7 +40,6 @@ def addNewValuesInMovieAndLink(missingIds, movies):
     cur.execute(sql)
     lastId = cur.fetchone()[0]
     cur.close()
-
     cur = conn.cursor()
     for el in missingIds:
         for item in movies.movieInfo:
@@ -70,7 +68,7 @@ def findRatingByVoteAndMovie(userRating, returnCount=False):
     cur = conn.cursor()
     sql = """SELECT COUNT(*) FROM public.ratings2  where "movieId" = %s and "userId" = %s"""
     if(returnCount):
-        sql = """SELECT * FROM public.ratings2  where "movieId" = %s and "userId" = %s"""
+        sql = """SELECT "rating" FROM public.ratings2  where "movieId" = %s and "userId" = %s"""
     cur.execute(sql, (userRating.movieId, userRating.userId))
     ratingList = cur.fetchone()
     cur.close()

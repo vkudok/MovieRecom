@@ -3,7 +3,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 import pandas as pd
 import json
+import pickle
 from sqlalchemy import create_engine
+import psycopg2
+
+conn = psycopg2.connect(dbname="movieinfo",
+                        port="5432",
+                        host="localhost",
+                        user="postgres",
+                        password="1234")
+
 
 POSTGRESQL_HOSTS = 'postgresql://postgres:1234@localhost:5432/movieinfo'
 
@@ -30,11 +39,35 @@ def extract_year(title):
     else:
         return np.nan
 
+def postgresql_to_dataframe(conn, select_query, column_names, id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(select_query, (id,))
+        print('hello')
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error: %s" % error)
+        cursor.close()
+        return 1
 
-def prepareData():
-    # change the column name from title to title_year
-    movies = pd.read_sql_table('movies', engine)
+    # Naturally we get a list of tupples
+    tupples = cursor.fetchall()
+    cursor.close()
 
+    # We just need to turn it into a pandas dataframe
+    df = pd.DataFrame(tupples, columns=column_names)
+    return df
+
+def getMovies(id):
+    sql = """SELECT * FROM movies where "movieId" = %s UNION (SELECT * FROM movies ORDER BY RANDOM() LIMIT 2000);"""
+    columns=['movieId', 'title', 'genres']
+    movies = postgresql_to_dataframe(conn, sql, columns, id)
+    user_item_matrixPickle = open('dataframe/moviesmovies', 'wb')
+    pickle.dump(movies, user_item_matrixPickle)
+    user_item_matrixPickle.close()
+    return movies
+
+def prepareData(id):
+    movies = getMovies(id)
     movies.rename(columns={'title': 'title_year'}, inplace=True)
     # remove leading and ending whitespaces in title_year
     movies['title_year'] = movies['title_year'].apply(lambda x: x.strip())
@@ -55,7 +88,7 @@ def prepareData():
 
 
 def contentBasedRecom(id, numRecom):
-    movies = prepareData()
+    movies = prepareData(id)
     # create an object for TfidfVectorizer
     tfidf_vector = TfidfVectorizer(stop_words='english')
     # apply the object to the genres column
@@ -81,7 +114,7 @@ def recommender(entryMovieId, how_many, movies, sim_matrix):
     links = pd.read_sql_table('links', engine)
 
     strIndex = movies[movies.movieId == entryMovieId].index.values[0]
-
+    print(strIndex)
     recommenderMovies = []
     movie_list = list(enumerate(sim_matrix[int(strIndex)]))
     # remove the typed movie itself

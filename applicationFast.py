@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Body, status
 from collaborativeFiltering import trainCollModel, collaborativeRecom
 from movieService import setNewUserRating, findRatingByVoteAndMovie, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
-from contentBasedFiltering import contentBasedRecom
+from contentBasedFiltering import contentBasedRecom, getMovies
 from index import recommendationDefine
 from typing import List
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from movieService import countMovieEntriesInRating
+import time
 
 class MovieType(BaseModel):
     name: str
@@ -23,6 +24,11 @@ class RatingType(BaseModel):
     movieId: int
     rating: float
     timestamp: str
+
+
+class UserRatingType(BaseModel):
+    userId: str
+    movieId: int
 
 
 app = FastAPI()
@@ -71,20 +77,24 @@ async def setRating(userRating: RatingType = Body()):
     return {"message": 'Add Rating'}\
 
 @app.post("/findRating")
-async def findRating(userRating: RatingType = Body()):
+async def findRating(userRating: UserRatingType = Body()):
     result = findRatingByVoteAndMovie(userRating, True)
-    return result[2]
+    if(result is not None):
+        return result[0]
+    else:
+        return result
 
 @app.post("/getRecom")
 async def getRecom(tmdbId, valueNumber=5):
     recom = recommendationDefine(int(tmdbId), int(valueNumber))
     return {"recommendation": recom}
 
-
 @app.get("/content_recom")
 async def content(movieId, valueNumber=5):
+    start = time.time()
     recom = contentBasedRecom(int(movieId), int(valueNumber))
-    return {"recommendation": recom}
+    end = time.time()
+    return {"recommendation": recom, "time": end - start}
 
 
 @app.get("/coll_recom")
