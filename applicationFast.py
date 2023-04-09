@@ -2,7 +2,7 @@ from fastapi import FastAPI, Body, status
 from collaborativeFiltering import trainCollModel, collaborativeRecom
 from movieService import setNewUserRating, findRatingByVoteAndMovie, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
 from contentBasedFiltering import contentBasedRecom, getMovies
-from index import recommendationDefine
+from index import recommendationDefine, rec
 from typing import List
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,6 @@ class MovieType(BaseModel):
     name: str
     genre: str
     tmdbId: int
-
 
 class MovieInfoType(BaseModel):
     movieInfo: List[MovieType]
@@ -29,7 +28,6 @@ class RatingType(BaseModel):
 class UserRatingType(BaseModel):
     userId: str
     movieId: int
-
 
 app = FastAPI()
 
@@ -53,10 +51,25 @@ async def find(movies: MovieInfoType = Body()):
     object = findExistingMovie(listId)
     if (len(object['missingIds'])):
         addNewValuesInMovieAndLink(object['missingIds'], movies)
-        trainCollModel()
     movieListIds = getMovieIdByTmdbId(listId)
     return movieListIds
 
+
+@app.post("/setNewFilms")
+async def find(movies: MovieInfoType = Body()):
+    listId = []
+    for item in movies.movieInfo:
+        listId.append(item.tmdbId)
+    object = findExistingMovie(listId)
+    if (len(object['missingIds'])):
+        addNewValuesInMovieAndLink(object['missingIds'], movies)
+        trainCollModel()
+    return object
+
+@app.post("/getMovieIdByTmdbId")
+async def find2(listId: List[int] = Body()):
+    movieListIds = getMovieIdByTmdbId(listId)
+    return movieListIds
 
 @app.post("/trainCollModel")
 async def find():

@@ -49,7 +49,7 @@ def trainCollModel():
     knnPickle.close()
 
 
-def collaborativeRecom(id, numRecom):
+def collaborativeRecom(entryId, numRecom):
     engine = create_engine(POSTGRESQL_HOSTS)
     movies = pd.read_sql_table('movies', engine)
     links = pd.read_sql_table('links', engine)
@@ -58,7 +58,7 @@ def collaborativeRecom(id, numRecom):
     csr_data = pickle.load(open('dataframe/csr_data', 'rb'))
 
     recommendations = numRecom
-    movie_id = id
+    movie_id = entryId
 
     movie_id = user_item_matrix[user_item_matrix['movieId'] == movie_id].index[0]
     distances, indices = knn.kneighbors(csr_data[movie_id], n_neighbors=recommendations + 1)
@@ -77,12 +77,14 @@ def collaborativeRecom(id, numRecom):
     for ind_dist in indices_distances_sorted:
         matrix_movie_id = user_item_matrix.iloc[ind_dist[0]]['movieId']
         id = movies[movies['movieId'] == matrix_movie_id].index
-        title = movies.iloc[id]['title'].values[0]
-        movie_id = movies.iloc[id]['movieId'].values[0]
-        linkId = links[links['movieid'] == matrix_movie_id].index
-        tmdbId = links.iloc[linkId]['tmdbid'].values[0]
-        recom_list.append({'title': title, 'movie_id': movie_id, 'tmdbId': tmdbId})
+        if(len(id)>0):
+            recMovieId = movies.iloc[id]['movieId'].values[0]
+            if(recMovieId != entryId):
+                title = movies.iloc[id]['title'].values[0]
+                linkId = links[links['movieid'] == matrix_movie_id].index
+                tmdbId = links.iloc[linkId]['tmdbid'].values[0]
+                recom_list.append({'title': title, 'movie_id': recMovieId, 'tmdbId': tmdbId, 'type': 'collaborative'})
 
-    recom_df = pd.DataFrame(recom_list, index=range(1, recommendations + 1))
+    recom_df = pd.DataFrame(recom_list)
 
     return json.loads(recom_df.to_json(orient="records"))

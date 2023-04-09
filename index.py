@@ -3,8 +3,6 @@ from collaborativeFiltering import collaborativeRecom
 from contentBasedFiltering import contentBasedRecom
 from movieService import countMovieEntriesInRating, getMovieIdByTmdbId
 
-
-
 def recommendationDefine(tmdbId, numRecom):
     tmdbIdList = []
     tmdbIdList.append(tmdbId)
