@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Body, status
 from collaborativeFiltering import trainCollModel, collaborativeRecom
 from movieService import setNewUserRating, findRatingByVoteAndMovie, getMovieIdByTmdbId, addNewValuesInMovieAndLink, findExistingMovie
-from contentBasedFiltering import contentBasedRecom, getMovies
-from index import recommendationDefine, rec
+from contentBasedFiltering import contentBasedRecom
+from index import recommendationDefine
 from typing import List
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
