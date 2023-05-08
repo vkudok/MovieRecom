@@ -66,27 +66,28 @@ async def find(movies: MovieInfoType = Body()):
         trainCollModel()
     return object
 
-@app.post("/getMovieIdByTmdbId")
-async def find2(listId: List[int] = Body()):
-    movieListIds = getMovieIdByTmdbId(listId)
-    return movieListIds
+# @app.post("/getMovieIdByTmdbId")
+# async def find2(listId: List[int] = Body()):
+#     movieListIds = getMovieIdByTmdbId(listId)
+#     return movieListIds
 
 @app.post("/trainCollModel")
 async def find():
     trainCollModel()
     return {"trainCollModel": "trainCollModel"}
 
-@app.post("/countMovieEntriesInRating")
-async def countMovie(tmdbId):
-    tmdbIdList = []
-    tmdbIdList.append(tmdbId)
-    movieIdList = getMovieIdByTmdbId(tmdbIdList)
-    count = countMovieEntriesInRating(movieIdList)[0]
-    return {"count": count}
+# @app.post("/countMovieEntriesInRating")
+# async def countMovie(tmdbId):
+#     tmdbIdList = []
+#     tmdbIdList.append(tmdbId)
+#     movieIdList = getMovieIdByTmdbId(tmdbIdList)
+#     count = countMovieEntriesInRating(movieIdList)[0]
+#     return {"count": count}
 
 @app.post("/setMovieRating")
 async def setRating(userRating: RatingType = Body()):
     setNewUserRating(userRating)
+    trainCollModel()
     return {"message": 'Add Rating'}\
 
 @app.post("/findRating")
@@ -102,15 +103,15 @@ async def getRecom(tmdbId, valueNumber=5):
     recom = recommendationDefine(int(tmdbId), int(valueNumber))
     return {"recommendation": recom}
 
-@app.get("/content_recom")
-async def content(movieId, valueNumber=5):
-    start = time.time()
-    recom = contentBasedRecom(int(movieId), int(valueNumber))
-    end = time.time()
-    return {"recommendation": recom, "time": end - start}
-
-
-@app.get("/coll_recom")
-async def coll_recom(movieId, valueNumber=5):
-    recom = collaborativeRecom(int(movieId), int(valueNumber))
-    return {"recommendation": recom}
+# @app.get("/content_recom")
+# async def content(movieId, valueNumber=5):
+#     start = time.time()
+#     recom = contentBasedRecom(int(movieId), int(valueNumber))
+#     end = time.time()
+#     return {"recommendation": recom, "time": end - start}
+#
+#
+# @app.get("/coll_recom")
+# async def coll_recom(movieId, valueNumber=5):
+#     recom = collaborativeRecom(int(movieId), int(valueNumber))
+#     return {"recommendation": recom}
